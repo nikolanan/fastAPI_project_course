@@ -1,1 +1,4 @@
 venv
+project_1/__py*
+project_2/__py*
+to_do_app/__py*
