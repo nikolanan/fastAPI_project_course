@@ -2,6 +2,13 @@ from database import Base
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 
 class Users(Base):
+    """
+    Model representing a user in the system.
+
+    :param Base: Base class for SQLAlchemy models.
+    :type Base: sqlalchemy.ext.declarative.DeclarativeMeta
+    """
+
     __tablename__ = "users"
 
     id = Column(Integer,primary_key=True,index=True)
@@ -14,6 +21,12 @@ class Users(Base):
     role = Column(String)
 
 class Todos(Base):
+    """
+    Model representing a to-do item.
+
+    :param Base: Base class for SQLAlchemy models.
+    :type Base: sqlalchemy.ext.declarative.DeclarativeMeta
+    """
     __tablename__ ='todos'
 
     id = Column(Integer,primary_key=True,index=True)
@@ -21,4 +34,4 @@ class Todos(Base):
     description = Column(String)
     priority = Column(Integer)
     complete = Column(Boolean, default=False)
-    owner_id = Column(Integer, ForeignKey("users.id"))
+    owner_id = Column(Integer, ForeignKey("users.id")) ## Name is used to reference the Users table
