@@ -37,11 +37,29 @@ user_dependancy = Annotated[dict, Depends(get_current_user)]
 bcrypt_context = CryptContext(schemes=['bcrypt'],deprecated='auto')
 
 class UserVerificationRequest(BaseModel):
+    """Request model for user verification.
+
+    :param BaseModel: Base class for Pydantic models.
+    :type BaseModel: pydantic.BaseModel
+    """
+
     password:str
     new_password:str
 
 @router.get("/info",status_code=status.HTTP_200_OK)
 async def get_user_if(user:user_dependancy,db:db_dependancy):
+    """
+    Fetches the user information based on the JWT token.
+
+    :param user: Current user information from the JWT token.
+    :type user: user_dependancy
+    :param db: Database session dependency.
+    :type db: db_dependancy
+    :raises HTTPException: If the user is not found, a 404 error is raised.
+    :return: User model containing user information.
+    :rtype: Users
+    """
+
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     user_model = db.query(Users).filter(Users.id == user.get("id")).first()
@@ -49,13 +67,47 @@ async def get_user_if(user:user_dependancy,db:db_dependancy):
 
 @router.patch("/change_password",status_code=status.HTTP_200_OK)
 async def change_user_password(user:user_dependancy,db:db_dependancy,user_verification_data:UserVerificationRequest):
+    """
+    A patch request to change the password of the user.
+
+    :param user: Current user information from the JWT token.
+    :type user: user_dependancy
+    :param db: Database session dependency.
+    :type db: db_dependancy
+    :param user_verification_data: Data containing the current password and the new password.
+    :type user_verification_data: UserVerificationRequest
+    :raises HTTPException: If the user is not found or the password verification fails,
+    :raises HTTPException: If the verification fails, a 401 error is raised.
+    """
+
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=401, detail="User not found")
     user_model = db.query(Users).filter(Users.id == user.get("id")).first()
     hashed_password = user_model.hashed_password
     if not bcrypt_context.verify(user_verification_data.password,hashed_password):
         raise HTTPException(status_code=401,detail="Verification failed")
     new_hashed_password = bcrypt_context.hash(user_verification_data.new_password)
     user_model.hashed_password = new_hashed_password
+    db.add(user_model)
+    db.commit()
+
+@router.put("/phonenumber/{phone_number}",status_code=status.HTTP_204_NO_CONTENT)
+async def change_phone_number(user:user_dependancy, db:db_dependancy, phone_nubmer:str):
+    """
+    A put request to change the phone number of the user.
+
+    :param user: Current user information from the JWT token.
+    :type user: user_dependancy
+    :param db: Database session dependency.
+    :type db: db_dependancy
+    :param phone_nubmer: The new phone number to be set for the user.
+    :type phone_nubmer: str
+    :raises HTTPException: If the user is not found, a 404 error is raised.
+    """
+
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+    user_model = db.query(Users).filter(Users.id == user.get("id")).first()
+    user_model.phone_number = phone_nubmer
     db.add(user_model)
     db.commit()
